@@ -12,6 +12,7 @@ class Ellipse
 	double domega; // Rotation angle of ellipse
 
 	public:
+	Ellipse(){};
 	Ellipse(double dSmaIn, olc::vd2d f1In, olc::vd2d f2In)
 	{
 		dSma = dSmaIn;
@@ -53,12 +54,18 @@ private:
 	const unsigned nPoint = 1e4;
 	olc::vd2d vCenter;
 	float fScale;
+	olc::vd2d f1;
+	olc::vd2d f2;
+	Ellipse elpA;
 
 public:
 	bool OnUserCreate() override
 	{
         vCenter = { (float)ScreenWidth() / 2, (float)ScreenHeight() / 2 };
 		fScale = (float)ScreenWidth() / 4;
+		f1 = {0.75, -0.50};
+		f2 = {0.5, 0.0};
+		elpA = {0.6, f1, f2};
 		return true;
 	}
 
@@ -66,15 +73,11 @@ public:
 	{
 		Clear(olc::BLACK);
 
-		olc::vd2d f1({0.75, -0.50});
-		olc::vd2d f2({0.5, 0.0});
-
 		// Draw foci
 		FillCircle(f1*fScale+vCenter, 0.05*fScale, olc::GREEN);
 		FillCircle(f2*fScale+vCenter, 0.05*fScale, olc::RED);
 
 		// Draw ellipse
-	    Ellipse elpA(0.6, f1, f2);
 		for (unsigned idxPoint=0; idxPoint < nPoint; idxPoint++)
 		{
 			double dTheta = (double)(idxPoint)/nPoint*2*M_PI;
