@@ -54,8 +54,8 @@ private:
 	const unsigned nPoint = 1e4;
 	olc::vd2d vCenter;
 	float fScale;
-	olc::vd2d f1;
-	olc::vd2d f2;
+	olc::vd2d vf1;
+	olc::vd2d vf2;
 	Ellipse elpA;
 
 public:
@@ -63,9 +63,9 @@ public:
 	{
         vCenter = { (float)ScreenWidth() / 2, (float)ScreenHeight() / 2 };
 		fScale = (float)ScreenWidth() / 4;
-		f1 = {0.75, -0.50};
-		f2 = {0.5, 0.0};
-		elpA = {0.6, f1, f2};
+		vf1 = {0.75, -0.50};
+		vf2 = {0.5, 0.0};
+		elpA = {0.6, vf1, vf2};
 		return true;
 	}
 
@@ -74,8 +74,8 @@ public:
 		Clear(olc::BLACK);
 
 		// Draw foci
-		FillCircle(f1*fScale+vCenter, 0.05*fScale, olc::GREEN);
-		FillCircle(f2*fScale+vCenter, 0.05*fScale, olc::RED);
+		FillCircle(vf1*fScale+vCenter, 0.05*fScale, olc::GREEN);
+		FillCircle(vf2*fScale+vCenter, 0.05*fScale, olc::RED);
 
 		// Draw ellipse
 		for (unsigned idxPoint=0; idxPoint < nPoint; idxPoint++)
