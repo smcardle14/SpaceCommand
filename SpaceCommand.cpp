@@ -57,20 +57,65 @@ private:
 	olc::vd2d vf1;
 	olc::vd2d vf2;
 	Ellipse elpA;
+	double dSma;
+	bool bMovingFocus = false;
 
 public:
 	bool OnUserCreate() override
 	{
         vCenter = { (float)ScreenWidth() / 2, (float)ScreenHeight() / 2 };
 		fScale = (float)ScreenWidth() / 4;
-		vf1 = {0.75, -0.50};
+
+		// Initial ellipse definition
+		dSma = 0.6;
+		vf1 = {0.0, 0.0};
 		vf2 = {0.5, 0.0};
-		elpA = {0.6, vf1, vf2};
+
+		elpA = {dSma, vf1, vf2};
 		return true;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
+
+		// USER INPUTS
+		bool bRedoEllipse = false;
+		if (GetMouseWheel() > 0)
+		{
+			dSma *= 1.05;
+			bRedoEllipse = true;
+		}
+		if (GetMouseWheel() < 0)
+		{
+			dSma /= 1.05;
+			bRedoEllipse = true;
+		}
+
+		if (GetMouse(0).bPressed)
+		{
+			olc::vi2d vf2ScreenPos = vf2*fScale+vCenter;
+			olc::vi2d vDist;
+			vDist.x = GetMouseX() - vf2ScreenPos.x;
+			vDist.y = GetMouseY() - vf2ScreenPos.y;
+			double dDist = vDist.mag();
+			if (dDist < 0.05*fScale) bMovingFocus = true;
+		}
+
+		if (bMovingFocus)
+		{
+			olc::vd2d vf2New;
+			vf2New.x = (GetMouseX()-vCenter.x)/fScale;
+			vf2New.y = (GetMouseY()-vCenter.y)/fScale;
+			vf2 = vf2New;
+			bRedoEllipse = true;
+		}
+
+		if (GetMouse(0).bReleased) bMovingFocus = false;
+
+		if (bRedoEllipse) elpA = {dSma, vf1, vf2};
+		bRedoEllipse = false;
+
+		// RENDERING
 		Clear(olc::BLACK);
 
 		// Draw foci
