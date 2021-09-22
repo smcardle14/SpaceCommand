@@ -27,19 +27,52 @@ class Ellipse
 
 	olc::vd2d getPoint(double dTheta)
 	{
-		double dR = dP/(1.0-dEcc*cos(dTheta));
+		double dR = dP/(1.0+dEcc*cos(dTheta));
 		olc::vd2d pointOut;
 		pointOut.x = dR*cos(dTheta);
 		pointOut.y = dR*sin(dTheta);
 
 		// Rotate ellipse
 		olc::vd2d pointOutRot;
-		pointOutRot.x = pointOut.x*cos(domega) - pointOut.y*sin(domega) + f1.x;
-		pointOutRot.y = pointOut.x*sin(domega) + pointOut.y*cos(domega) + f1.y;
+		pointOutRot.x = -pointOut.x*cos(domega) - pointOut.y*sin(domega) + f1.x;
+		pointOutRot.y = -pointOut.x*sin(domega) + pointOut.y*cos(domega) + f1.y;
 
 		return pointOutRot;
-		
 	}
+
+	double getEcc(){ return dEcc; }
+};
+
+class Spacecraft
+{
+	Ellipse elp;
+	double dMeanAnomaly = 0.0;
+	double dTrueAnomaly = 0.0;
+	public:
+	Spacecraft(){};
+	void setEllipse(Ellipse elpIn)
+	{
+		elp = elpIn;
+	}
+	Ellipse getEllipse()
+	{
+		return elp;
+	}
+	void stepTrueAnomaly(double dStepMeanAnomaly)
+	{
+		dMeanAnomaly += dStepMeanAnomaly;
+		double dEccentricAnomaly = dMeanAnomaly;
+		double dEcc = elp.getEcc();
+		for (unsigned k=0; k<10; k++)
+		{
+			dEccentricAnomaly = dMeanAnomaly + dEcc*sin(dEccentricAnomaly);
+		}
+		dTrueAnomaly = 2.0*atan2(sqrt(1.0+dEcc)*tan(0.5*dEccentricAnomaly),sqrt(1.0-dEcc));
+	}
+	olc::vd2d getSpacecraftPos()
+	{
+		return elp.getPoint(dTrueAnomaly);
+	};
 };
 
 class SpaceCommandGame : public olc::PixelGameEngine
@@ -56,7 +89,7 @@ private:
 	float fScale;
 	olc::vd2d vf1;
 	olc::vd2d vf2;
-	Ellipse elpA;
+	Spacecraft scA;
 	double dSma;
 	bool bMovingFocus = false;
 
@@ -71,7 +104,7 @@ public:
 		vf1 = {0.0, 0.0};
 		vf2 = {0.5, 0.0};
 
-		elpA = {dSma, vf1, vf2};
+		scA.setEllipse({dSma, vf1, vf2});
 		return true;
 	}
 
@@ -112,8 +145,11 @@ public:
 
 		if (GetMouse(0).bReleased) bMovingFocus = false;
 
-		if (bRedoEllipse) elpA = {dSma, vf1, vf2};
+		if (bRedoEllipse) scA.setEllipse({dSma, vf1, vf2});
 		bRedoEllipse = false;
+
+		// Update spacecraft position
+		scA.stepTrueAnomaly(fElapsedTime);
 
 		// RENDERING
 		Clear(olc::BLACK);
@@ -126,8 +162,12 @@ public:
 		for (unsigned idxPoint=0; idxPoint < nPoint; idxPoint++)
 		{
 			double dTheta = (double)(idxPoint)/nPoint*2*M_PI;
-			Draw(elpA.getPoint(dTheta)*fScale+vCenter, olc::WHITE);
+			Draw(scA.getEllipse().getPoint(dTheta)*fScale+vCenter, olc::WHITE);
 		}
+
+		// Draw spacecraft position
+		FillCircle(scA.getSpacecraftPos()*fScale+vCenter, 0.025*fScale, olc::BLUE);
+
 		return true;
 	}
 };
